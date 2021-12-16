@@ -133,13 +133,33 @@ constexpr matrix<T, N, M> operator/(T a, const matrix<T, N, M> &m) {
  *  @return \f$ \textbf{a} \circ \textbf{b}' \f$ such that \f$ {\textbf{b}_{ij}}' = \left(\textbf{b}_{ij}\right)^{-1}\f$
  *  and \f$ \left(\textbf{a} \circ \textbf{b}'\right)_{ij} = \textbf{a}_{ij} {\textbf{b}'}_{ij} \f$
  *
- *  Computes elementwise division between two matrices
+ *  Computes elementwise division between two matrices.
  */
 template <typename T, std::size_t N, std::size_t M>
 constexpr matrix<T, N, M> operator/(const matrix<T, N, M> &a,
                                     const matrix<T, N, M> &b) {
   return elementwise(std::divides<T>(), a, b);
 }
+
+/** @brief computes the matrix product
+ *  @param A an \f$ N \times M \f$ matrix of type T
+ *  @param B an \f$ M \times L \f$ matrix of type U
+ *  @return The matrix product \f$ \textbf{A} \textbf{B} \f$
+ * 
+ *  Computes the standard matrix product.
+ */
+// template <typename T, typename U, std::size_t N, std::size_t M, std::size_t L>
+// constexpr matrix<decltype(T*U), N, L> operator*(const matrix<T, N, M> &A,
+//                                                 const matrix<U, M, L> &B) {
+                                        
+//   auto C = matrix<decltype(T*U), N, L>{};
+
+//   for (auto i = 0u; i < N; ++i) {
+//     for (auto j = 0u; j < M; ++i) {
+//       C[i][j]
+//     }
+//   }
+// }
 
 /** }@*/
 

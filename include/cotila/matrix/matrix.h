@@ -22,10 +22,18 @@ namespace cotila {
  *  It is an aggregate type containing a single member array of type
  *  `T[N][M]` which can be initialized with aggregate initialization.
  */
-template <typename T, std::size_t N, std::size_t M> struct matrix {
+template <typename T, std::size_t N, std::size_t M>
+class matrix {
+public:
   static_assert(N != 0 && M != 0,
                 "matrix must have have positive dimensions");
   COTILA_DETAIL_ASSERT_ARITHMETIC(T)
+
+  constexpr matrix(const std::array<T, N*M>& x) 
+    : data_(from_std_array_(x)) {}
+
+  constexpr matrix(const T (&x)[M][N]) 
+    : data_(from_array_(x)) {}
 
   using value_type = T;
   using size_type = std::size_t;
@@ -43,7 +51,7 @@ template <typename T, std::size_t N, std::size_t M> struct matrix {
   constexpr vector<T, M> row(std::size_t i) const {
     if (i >= N)
       throw "index out of range";
-    return generate<M>([i, this](std::size_t j) { return arrays[i][j]; });
+    return generate<M>([i, this](std::size_t j) { return data_[j][i]; });
   }
 
   /** @brief access specified column
@@ -55,7 +63,7 @@ template <typename T, std::size_t N, std::size_t M> struct matrix {
   constexpr vector<T, N> column(std::size_t i) const {
     if (i >= M)
       throw "index out of range";
-    return generate<N>([i, this](std::size_t j) { return arrays[j][i]; });
+    return generate<N>([i, this](std::size_t j) { return data_[i][j]; });
   }
 
   /** @brief access specified element
@@ -67,13 +75,36 @@ template <typename T, std::size_t N, std::size_t M> struct matrix {
    *  row pointer.  For a matrix `m`, accessing the element in the 5th row
    *  and 3rd column can be done with `m[5][3]`.
    */
-  constexpr T *operator[](std::size_t i) { return arrays[i]; }
+  constexpr T operator()(std::size_t i, std::size_t j) const {
+    return data_[j][i];
+  }
 
-  /// @copydoc operator[]
-  constexpr T const *operator[](std::size_t i) const { return arrays[i]; }
-  ///@}
+private:
+  using Data = std::array<std::array<T, N>, M>;
 
-  T arrays[N][M]; ///< @private
+  Data data_; ///< @private
+
+  static constexpr Data from_std_array_(const std::array<T, N * M>& x) {
+    Data d{};
+    auto k = 0u;
+    for (auto i = 0u; i < M; ++i) {
+      for (auto j = 0u; j < N; ++j) {
+        d[j][i] = x[k];
+        k++;
+      }
+    }
+    return d;
+  }
+
+  static constexpr Data from_array_(const T (&x)[M][N]) {
+    Data d{};
+    for (auto i = 0u; i < M; ++i) {
+      for (auto j = 0u; j < N; ++j) {
+        d[i][j] = x[i][j];
+      }
+    }
+    return d;
+  }
 };
 
 /** \addtogroup matrix
@@ -88,11 +119,12 @@ template <typename T, std::size_t N, std::size_t M> struct matrix {
  *
  *  This deduction guide allows cotila::matrix to be constructed like this:
  *  \code{.cpp}
- *  cotila::matrix m{{{1., 2.}, {3., 4.}}}; // deduces the type of m to be cotila::matrix<double, 2, 2>
+ *  cotila::matrix m{{{1., 2., 3.}, {4., 5., 6.}}}; // deduces the type of m to
+ *  be cotila::matrix<double, 2, 3>
  *  \endcode
  */
-template <typename T, std::size_t M, std::size_t N>
-matrix(const T (&)[M][N])->matrix<T, M, N>;
+template <typename T, std::size_t N, std::size_t M>
+matrix(const T (&)[M][N])->matrix<T, N, M>;
 
 /** @brief deduction guide for complex-valued aggregate initialization
  *  @relatesalso cotila::matrix
@@ -102,8 +134,8 @@ matrix(const T (&)[M][N])->matrix<T, M, N>;
  *  cotila::matrix m{{{{1., 0.}, {2., 1.}}, {{3., 2.}, {4., 3.}}}}; // deduces the type of m to be cotila::matrix<std::complex<double>, 2, 2>
  *  \endcode
  */
-template <typename T, std::size_t M, std::size_t N>
-matrix(const T (&)[M][N][2])->matrix<std::complex<T>, M, N>;
+template <typename T, std::size_t N, std::size_t M>
+matrix(const T (&)[M][N][2])->matrix<std::complex<T>, N, M>;
 
 ///@}
 
